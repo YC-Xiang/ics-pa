@@ -17,6 +17,7 @@
 #include <cpu/cpu.h>
 #include <readline/readline.h>
 #include <readline/history.h>
+#include <memory/paddr.h>
 #include "sdb.h"
 
 static int is_batch_mode = false;
@@ -47,9 +48,68 @@ static int cmd_c(char *args) {
   return 0;
 }
 
-
 static int cmd_q(char *args) {
+  nemu_state.state = NEMU_QUIT;
   return -1;
+}
+
+static int cmd_si(char *args) {
+	if (args == NULL) {
+		printf("args is NULL, please enter si [N]\n");
+		return 0;
+	}
+
+	char *num_for_check = args;
+
+	while(*num_for_check != '\0') { //检查args是不是数字
+		if(*num_for_check < '0' || *num_for_check > '9') {
+			printf("args is invalid, please enter si [N]\n");
+			return 0;
+		}
+		num_for_check++;
+	}
+
+  int num = atoi(args);
+  cpu_exec(num);
+
+  return 0;
+}
+
+static int cmd_info(char *args) {
+	if (args == NULL) {
+		printf("args is NULL, please enter info r or info w\n");
+		return 0;
+	}
+
+	isa_reg_display();
+
+  return 0;
+}
+
+static int cmd_x(char *args) {
+	if (args == NULL) {
+		printf("args is NULL, please enter X N EXPR\n");
+		return 0;
+	}
+	char *x_num = strtok(args, " ");
+  int num = atoi(x_num);
+
+  char *args_left = x_num + strlen(x_num) + 1;
+  paddr_t addr = strtoul(args_left, NULL, 16);
+
+  uint8_t* mem = guest_to_host(addr);
+
+  printf("0x%8x: ", addr);
+  for (int i = 0; i < num; i++) {
+    printf("0x");
+    for (int j = 3; j >= 0; j--){
+      printf("%02x", mem[j + 4 * i]);
+    }
+    printf("\t");
+  }
+  printf("\n");
+
+  return 0;
 }
 
 static int cmd_help(char *args);
@@ -62,6 +122,9 @@ static struct {
   { "help", "Display information about all supported commands", cmd_help },
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
+  { "si", "si [N] execuate single step", cmd_si },
+	{ "info", "info SUBCMD r/w", cmd_info },
+	{ "x", "x N EXPR", cmd_x },
 
   /* TODO: Add more commands */
 
@@ -112,7 +175,7 @@ void sdb_mainloop() {
     /* treat the remaining string as the arguments,
      * which may need further parsing
      */
-    char *args = cmd + strlen(cmd) + 1;
+    char *args = cmd + strlen(cmd) + 1; //直接取到内存中字符串的后半部分
     if (args >= str_end) {
       args = NULL;
     }

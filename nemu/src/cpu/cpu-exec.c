@@ -36,28 +36,28 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 #ifdef CONFIG_ITRACE_COND
   if (ITRACE_COND) { log_write("%s\n", _this->logbuf); }
 #endif
-  if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
+  if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); } //执行si打印执行的命令, si[N] N<10
   IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
 }
 
 static void exec_once(Decode *s, vaddr_t pc) {
-  s->pc = pc;
-  s->snpc = pc;
-  isa_exec_once(s);
-  cpu.pc = s->dnpc;
+  s->pc = pc; // 0x80000000
+  s->snpc = pc; // 0x80000000
+  isa_exec_once(s); // s->snpc + 4, s->dnpc + 4, 变成0x80000004
+  cpu.pc = s->dnpc; //0x8000004
 #ifdef CONFIG_ITRACE
   char *p = s->logbuf;
   p += snprintf(p, sizeof(s->logbuf), FMT_WORD ":", s->pc);
-  int ilen = s->snpc - s->pc;
+  int ilen = s->snpc - s->pc; //4
   int i;
   uint8_t *inst = (uint8_t *)&s->isa.inst.val;
   for (i = ilen - 1; i >= 0; i --) {
     p += snprintf(p, 4, " %02x", inst[i]);
   }
   int ilen_max = MUXDEF(CONFIG_ISA_x86, 8, 4);
-  int space_len = ilen_max - ilen;
+  int space_len = ilen_max - ilen; // 0
   if (space_len < 0) space_len = 0;
-  space_len = space_len * 3 + 1;
+  space_len = space_len * 3 + 1; // 1
   memset(p, ' ', space_len);
   p += space_len;
 
@@ -94,7 +94,8 @@ void assert_fail_msg() {
 
 /* Simulate how the CPU works. */
 void cpu_exec(uint64_t n) {
-  g_print_step = (n < MAX_INST_TO_PRINT);
+  g_print_step = (n < MAX_INST_TO_PRINT); //si 小于10就会打印出来
+  //printf("nemu_state.state=%d, nemu_state.halt_ret=%d\n", nemu_state.state, nemu_state.halt_ret); //STOP, 0
   switch (nemu_state.state) {
     case NEMU_END: case NEMU_ABORT:
       printf("Program execution has ended. To restart the program, exit NEMU and run again.\n");
@@ -104,11 +105,12 @@ void cpu_exec(uint64_t n) {
 
   uint64_t timer_start = get_time();
 
-  execute(n);
+  execute(n); //函数中exec_once->isa_exec_once->decode_exec->NEMUTRAP(s->pc, R(10)))会把nemu_state.state设为NEMU_END
 
   uint64_t timer_end = get_time();
   g_timer += timer_end - timer_start;
 
+  //printf("nemu_state.state=%d, nemu_state.halt_ret=%d\n", nemu_state.state, nemu_state.halt_ret); //END, 0
   switch (nemu_state.state) {
     case NEMU_RUNNING: nemu_state.state = NEMU_STOP; break;
 
@@ -121,4 +123,5 @@ void cpu_exec(uint64_t n) {
       // fall through
     case NEMU_QUIT: statistic();
   }
+  //printf("nemu_state.state=%d, nemu_state.halt_ret=%d\n", nemu_state.state, nemu_state.halt_ret); //END, 0
 }

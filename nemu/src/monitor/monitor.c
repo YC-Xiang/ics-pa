@@ -32,8 +32,8 @@ static void welcome() {
   Log("Build time: %s, %s", __TIME__, __DATE__);
   printf("Welcome to %s-NEMU!\n", ANSI_FMT(str(__GUEST_ISA__), ANSI_FG_YELLOW ANSI_BG_RED));
   printf("For help, type \"help\"\n");
-  Log("Exercise: Please remove me in the source code and compile NEMU again.");
-  assert(0);
+  //Log("Exercise: Please remove me in the source code and compile NEMU again.");
+  //assert(0);
 }
 
 #ifndef CONFIG_TARGET_AM
@@ -68,9 +68,11 @@ static long load_img() {
   return size;
 }
 
+// getopt_long函数https://www.jianshu.com/p/ae4ae0ef57bc
+
 static int parse_args(int argc, char *argv[]) {
   const struct option table[] = {
-    {"batch"    , no_argument      , NULL, 'b'},
+    {"batch"    , no_argument      , NULL, 'b'}, //如果shell传递的argv为batch，则getopt_long会返回'b'
     {"log"      , required_argument, NULL, 'l'},
     {"diff"     , required_argument, NULL, 'd'},
     {"port"     , required_argument, NULL, 'p'},
@@ -82,7 +84,7 @@ static int parse_args(int argc, char *argv[]) {
     switch (o) {
       case 'b': sdb_set_batch_mode(); break;
       case 'p': sscanf(optarg, "%d", &difftest_port); break;
-      case 'l': log_file = optarg; break;
+      case 'l': log_file = optarg; break; // optarg全局变量 表示当前选项对应的参数值
       case 'd': diff_so_file = optarg; break;
       case 1: img_file = optarg; return 0;
       default:
