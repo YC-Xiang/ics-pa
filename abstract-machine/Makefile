@@ -14,14 +14,14 @@ ifeq ($(MAKECMDGOALS),)
 endif
 
 ### Override checks when `make clean/clean-all/html`
-ifeq ($(findstring $(MAKECMDGOALS),clean|clean-all|html),)
+ifeq ($(findstring $(MAKECMDGOALS),clean|clean-all|html),) #如果函数返回值是空则ifeq生效, 如果匹配到clean|clean-all|html则跳过
 
 ### Print build info message
 $(info # Building $(NAME)-$(MAKECMDGOALS) [$(ARCH)])
 
 ### Check: environment variable `$AM_HOME` looks sane
-ifeq ($(wildcard $(AM_HOME)/am/include/am.h),)
-  $(error $$AM_HOME must be an AbstractMachine repo)
+ifeq ($(wildcard $(AM_HOME)/am/include/am.h),) # 存在am.h 跳过ifeq
+  $(error $$AM_HOME must be an AbstractMachine repo) # 两个$$来表示一个真实的$
 endif
 
 ### Check: environment variable `$ARCH` must be in the supported list
@@ -36,7 +36,7 @@ ISA        = $(word 1,$(ARCH_SPLIT))
 PLATFORM   = $(word 2,$(ARCH_SPLIT))
 
 ### Check if there is something to build
-ifeq ($(flavor SRCS), undefined)
+ifeq ($(flavor SRCS), undefined) # https://blog.csdn.net/Blanchet/article/details/128770977 判断SRCS变量是否存在
   $(error Nothing to build)
 endif
 
@@ -56,12 +56,12 @@ IMAGE     = $(abspath $(IMAGE_REL))
 ARCHIVE   = $(WORK_DIR)/build/$(NAME)-$(ARCH).a
 
 ### Collect the files to be linked: object files (`.o`) and libraries (`.a`)
-OBJS      = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(SRCS))))
+OBJS      = $(addprefix $(DST_DIR)/, $(addsuffix .o, $(basename $(SRCS)))) # WORK_DIR/build/riscv32-nemu/xxx.o
 LIBS     := $(sort $(LIBS) am klib) # lazy evaluation ("=") causes infinite recursions
 LINKAGE   = $(OBJS) \
   $(addsuffix -$(ARCH).a, $(join \
     $(addsuffix /build/, $(addprefix $(AM_HOME)/, $(LIBS))), \
-    $(LIBS) ))
+    $(LIBS) )) # abstract-machine/am/build/am-riscv32-nemu.a
 
 ## 3. General Compilation Flags
 
@@ -75,7 +75,7 @@ OBJCOPY   = $(CROSS_COMPILE)objcopy
 READELF   = $(CROSS_COMPILE)readelf
 
 ### Compilation flags
-INC_PATH += $(WORK_DIR)/include $(addsuffix /include/, $(addprefix $(AM_HOME)/, $(LIBS)))
+INC_PATH += $(WORK_DIR)/include $(addsuffix /include/, $(addprefix $(AM_HOME)/, $(LIBS))) # "where_we_make"/include abstract-machine/am/include
 INCFLAGS += $(addprefix -I, $(INC_PATH))
 
 CFLAGS   += -O2 -MMD -Wall -Werror $(INCFLAGS) \

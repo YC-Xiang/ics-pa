@@ -23,6 +23,8 @@ static inline word_t host_read(void *addr, int len) {
     case 1: return *(uint8_t  *)addr;
     case 2: return *(uint16_t *)addr;
     case 4: return *(uint32_t *)addr;
+    case 'b': return *(int8_t  *)addr; // lb 需要uint8_t符号扩展为uint32_t。先转成int8_t这样返回uint32_t就能符号扩展了，可以通过load-store.c test
+    case 'h': return *(int16_t  *)addr; // lh 符号扩展
     IFDEF(CONFIG_ISA64, case 8: return *(uint64_t *)addr);
     default: MUXDEF(CONFIG_RT_CHECK, assert(0), return 0);
   }
