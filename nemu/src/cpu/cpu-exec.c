@@ -41,14 +41,14 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 }
 
 static void exec_once(Decode *s, vaddr_t pc) {
-  s->pc = pc;
-  s->snpc = pc;
-  isa_exec_once(s);
-  cpu.pc = s->dnpc;
+  s->pc = pc; // 0x8000000
+  s->snpc = pc; // 0x8000000
+  isa_exec_once(s); // snpc += 4, dnpc += 4
+  cpu.pc = s->dnpc; // 0x80000004
 #ifdef CONFIG_ITRACE
   char *p = s->logbuf;
-  p += snprintf(p, sizeof(s->logbuf), FMT_WORD ":", s->pc);
-  int ilen = s->snpc - s->pc;
+  p += snprintf(p, sizeof(s->logbuf), FMT_WORD ":", s->pc); // 0x80000000:
+  int ilen = s->snpc - s->pc; // 0x80000004 - 0x8000000 = 4. Cuz s->pc not updated.
   int i;
   uint8_t *inst = (uint8_t *)&s->isa.inst.val;
   for (i = ilen - 1; i >= 0; i --) {

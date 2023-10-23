@@ -32,8 +32,8 @@ static void welcome() {
   Log("Build time: %s, %s", __TIME__, __DATE__);
   printf("Welcome to %s-NEMU!\n", ANSI_FMT(str(__GUEST_ISA__), ANSI_FG_YELLOW ANSI_BG_RED));
   printf("For help, type \"help\"\n");
-  Log("Exercise: Please remove me in the source code and compile NEMU again.");
-  assert(0);
+  // Log("Exercise: Please remove me in the source code and compile NEMU again.");
+  // assert(0);
 }
 
 #ifndef CONFIG_TARGET_AM
@@ -78,13 +78,15 @@ static int parse_args(int argc, char *argv[]) {
     {0          , 0                , NULL,  0 },
   };
   int o;
+  // 选项后带一个冒号，表示后面带一个参数，如-d 100
+  // 选项后带两个冒号，表示后面可带或不带参数，如果带参数，则选项与参数直接不能有空格，如-b200
   while ( (o = getopt_long(argc, argv, "-bhl:d:p:", table, NULL)) != -1) {
     switch (o) {
       case 'b': sdb_set_batch_mode(); break;
       case 'p': sscanf(optarg, "%d", &difftest_port); break;
-      case 'l': log_file = optarg; break;
+      case 'l': log_file = optarg; break; // optarg会自动赋值为命令行传入的值，如-l 1.txt的1.txt
       case 'd': diff_so_file = optarg; break;
-      case 1: img_file = optarg; return 0;
+      case 1: img_file = optarg; return 0; // ??? 什么情况会返回o是1?
       default:
         printf("Usage: %s [OPTION...] IMAGE [args]\n\n", argv[0]);
         printf("\t-b,--batch              run with batch mode\n");

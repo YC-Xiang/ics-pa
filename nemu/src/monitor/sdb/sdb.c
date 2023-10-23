@@ -17,6 +17,7 @@
 #include <cpu/cpu.h>
 #include <readline/readline.h>
 #include <readline/history.h>
+#include <memory/paddr.h>
 #include "sdb.h"
 
 static int is_batch_mode = false;
@@ -49,7 +50,76 @@ static int cmd_c(char *args) {
 
 
 static int cmd_q(char *args) {
+  nemu_state.state = NEMU_QUIT;
   return -1;
+}
+
+static int cmd_si(char *args) {
+  int n;
+
+  if (args == NULL) {
+    cpu_exec(1);
+  }
+  else {
+	n = atoi(args);
+	if (n == 0)
+		printf("Please enter a number\n"); // args not a number or number0，atoi both return 0.
+	cpu_exec(n);
+  }
+
+  return 0;
+}
+
+static int cmd_info(char *args) {
+	if (args == NULL)
+		printf("args is NULL, please enter info r or info w\n");
+
+	else if (*args == 'r')
+		isa_reg_display();
+	//else if (*args == 'w')
+
+	return 0;
+}
+
+static int cmd_x(char *args) {
+  if (args == NULL) {
+    printf("args is NULL, please enter X N EXPR\n");
+    return 0;
+  }
+  char *x_num = strtok(args, " ");
+  int num = atoi(x_num);
+
+  char *args_left = x_num + strlen(x_num) + 1;
+  paddr_t addr = strtoul(args_left, NULL, 16);
+
+  uint8_t* mem = guest_to_host(addr);
+
+  printf("0x%8x: ", addr);
+  for (int i = 0; i < num; i++) {
+    printf("0x");
+    for (int j = 3; j >= 0; j--){
+      printf("%02x", mem[j + 4 * i]);
+    }
+    printf("\t");
+  }
+  printf("\n");
+
+  return 0;
+}
+
+static int cmd_p(char *args) {
+  bool ret;
+
+  if (args == NULL) {
+    printf("args is NULL, please enter P EXPR\n");
+    return 0;
+  }
+
+  expr(args, &ret);
+  if (ret == false)
+    printf("expr failed!\n");
+
+  return 0;
 }
 
 static int cmd_help(char *args);
@@ -62,7 +132,10 @@ static struct {
   { "help", "Display information about all supported commands", cmd_help },
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
-
+  { "si", "Execution one step of the program", cmd_si },
+  { "info", "Print registers/watchpoints", cmd_info },
+  { "x", "Print memory value", cmd_x },
+  { "p", "expression", cmd_p },
   /* TODO: Add more commands */
 
 };
