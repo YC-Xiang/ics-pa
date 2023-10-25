@@ -61,29 +61,29 @@ static int cmd_si(char *args) {
     cpu_exec(1);
   }
   else {
-	n = atoi(args);
-	if (n == 0)
-		printf("Please enter a number\n"); // args not a number or number0，atoi both return 0.
-	cpu_exec(n);
+  n = atoi(args);
+  if (n == 0)
+    printf("Please enter a number\n"); // args not a number or number0，atoi both return 0.
+  cpu_exec(n);
   }
 
   return 0;
 }
 
 static int cmd_info(char *args) {
-	if (args == NULL)
-		printf("args is NULL, please enter info r or info w\n");
+  if (args == NULL)
+    Log_error("args is NULL, please enter info r or info w\n");
 
-	else if (*args == 'r')
-		isa_reg_display();
-	//else if (*args == 'w')
+  else if (*args == 'r')
+    isa_reg_display();
+  //else if (*args == 'w')
 
-	return 0;
+  return 0;
 }
 
 static int cmd_x(char *args) {
   if (args == NULL) {
-    printf("args is NULL, please enter X N EXPR\n");
+    Log_error("args is NULL, please enter X N EXPR\n");
     return 0;
   }
   char *x_num = strtok(args, " ");
@@ -108,16 +108,22 @@ static int cmd_x(char *args) {
 }
 
 static int cmd_p(char *args) {
-  bool ret;
+  bool ret = true;
+  uint32_t val;
 
   if (args == NULL) {
-    printf("args is NULL, please enter P EXPR\n");
+    Log_error("args is NULL, please enter P EXPR\n");
     return 0;
   }
 
-  expr(args, &ret);
-  if (ret == false)
-    printf("expr failed!\n");
+  val = expr(args, &ret);
+
+  if (ret == false || val == -1) {
+    Log_error("expr failed!\n");
+    return 0;
+  }
+
+  printf("val=%d\n", val);
 
   return 0;
 }

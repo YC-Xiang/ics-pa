@@ -214,4 +214,8 @@ config RT_CHECK
   bool "Enable runtime checking"
   default y
 
+config DEBUG
+  bool "Enable Debug info print"
+  default n
+
 endmenu

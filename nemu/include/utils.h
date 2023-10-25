@@ -54,7 +54,7 @@ uint64_t get_time();
 #define ANSI_BG_WHITE   "\33[1;47m"
 #define ANSI_NONE       "\33[0m"
 
-#define ANSI_FMT(str, fmt) fmt str ANSI_NONE
+#define ANSI_FMT(str, fmt) fmt str ANSI_NONE // output str with format str
 
 #define log_write(...) IFDEF(CONFIG_TARGET_NATIVE_ELF, \
   do { \
@@ -73,5 +73,9 @@ uint64_t get_time();
     log_write(__VA_ARGS__); \
   } while (0)
 
+#define _Log_info(...) \
+  do { \
+    printf(__VA_ARGS__); \
+  } while (0)
 
 #endif
