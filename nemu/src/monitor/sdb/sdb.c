@@ -109,7 +109,7 @@ static int cmd_x(char *args) {
 
 static int cmd_p(char *args) {
   bool ret = true;
-  uint32_t val;
+  word_t val;
 
   if (args == NULL) {
     Log_error("args is NULL, please enter P EXPR\n");
@@ -118,12 +118,12 @@ static int cmd_p(char *args) {
 
   val = expr(args, &ret);
 
-  if (ret == false || val == -1) {
-    Log_error("expr failed!\n");
+  if (ret == false) {
+    Log_error("expression evaluation failed!\n");
     return 0;
   }
 
-  printf("val=%d\n", val);
+  printf("val=%u\n", val);
 
   return 0;
 }
@@ -141,7 +141,7 @@ static struct {
   { "si", "Execution one step of the program", cmd_si },
   { "info", "Print registers/watchpoints", cmd_info },
   { "x", "Print memory value", cmd_x },
-  { "p", "expression", cmd_p },
+  { "p", "expression evaluation", cmd_p },
   /* TODO: Add more commands */
 
 };
@@ -180,6 +180,34 @@ void sdb_mainloop() {
     cmd_c(NULL);
     return;
   }
+
+#ifdef CONFIG_EXPR_TEST
+  char buff[512] = {};
+  bool ret = true;
+  FILE *fp = fopen("/home/yuchengxiang/ics2022/nemu/tools/gen-expr/build/input", "r");
+  if (fp == NULL)
+    printf("open file error!\n");
+  while (fgets(buff, sizeof(buff), fp)) {
+    printf("%s\n", buff);
+    for (int i = 0; i < sizeof(buff); i++)
+    {
+      if (buff[i] == 10)
+        buff[i] = '\0';
+    }
+
+    char *tmp = buff;
+    while (*tmp != ' ')
+      tmp++;
+    expr(++tmp, &ret);
+    if (ret == false) {
+      Log_error("expression evaluation failed!\n");
+      assert(0);
+    }
+    else
+      printf("pass!\n");
+    memset(buff, 0, sizeof(buff));
+  }
+#endif
 
   for (char *str; (str = rl_gets()) != NULL; ) {
     char *str_end = str + strlen(str);

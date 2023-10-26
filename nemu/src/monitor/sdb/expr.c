@@ -65,7 +65,7 @@ typedef struct token {
   char str[32];
 } Token;
 
-static Token tokens[32] __attribute__((used)) = {};
+static Token tokens[512] __attribute__((used)) = {};
 static int nr_token __attribute__((used))  = 0;
 
 static bool make_token(char *e) {
@@ -82,8 +82,8 @@ static bool make_token(char *e) {
         char *substr_start = e + position;
         int substr_len = pmatch.rm_eo;
 
-        Log("match rules[%d] = \"%s\" at position %d with len %d: %.*s",
-            i, rules[i].regex, position, substr_len, substr_len, substr_start); // %.*s 接收两个参数，第一个为输出长度，第二个为字符串
+        // Log("match rules[%d] = \"%s\" at position %d with len %d: %.*s",
+        //     i, rules[i].regex, position, substr_len, substr_len, substr_start); // %.*s 接收两个参数，第一个为输出长度，第二个为字符串
 
         position += substr_len;
 
@@ -135,7 +135,7 @@ static int check_parentheses(int p, int q) {
 
     if (count < 0) { // ) is left than (
       Log_error("the expression is wrong!\n");
-      return -2;
+      assert(0);
     }
     if ((count == 0) && (flag == 0)) { // if the most left ( is not eliminate by most right ) return -1.   (1+1) * (1+1)
       flag += 1;
@@ -145,39 +145,37 @@ static int check_parentheses(int p, int q) {
 
   if (count != 0) { // number of () is not equal
     Log_error("the expression is wrong!\n");
-    return -2;
+    assert(0);
   }
 
   if ((count == 0) && (flag1 == q) && ((tokens[p].type == '(') && (tokens[q].type ==')'))) // eliminate a pair of ()
-    return 0;
+    return true;
 
-  return -1; // no need to handle
+  return false; // no need to handle
 }
 
-static int eval(int p, int q) {
-  int ret;
+static word_t eval(int p, int q) {
   int main_op = TK_DIV; // assume beginning main_op is the max Token
   int op_pos = 1;
-  int val1;
-  int val2;
+  word_t val1;
+  word_t val2;
+  int count = 0;
   int i = p;
 
   if (p > q) {
     Log_error("p=%d, q=%d, start position can't exceed end position!\n", p, q);
-    return -1;
+    assert(0);
   }
   else if (p == q) {
     if (tokens[p].type != TK_NUM) {
       Log_error("Not a number!\n");
-      return -1;
+      assert(0);
     }
     return atoi(tokens[p].str);
   }
 
-  else if ((ret = check_parentheses(p, q)) == 0)
+  else if ((check_parentheses(p, q)) == true)
     return eval(p + 1, q - 1);
-  else if (ret == -2)
-    return -1;
   else {
     while (i >= p && i < q)
     {
@@ -188,10 +186,18 @@ static int eval(int p, int q) {
         }
       }
 
-      if (tokens[i].type == '(') {
+      if (tokens[i].type == '(') { // if encounter '(', skip to the pair of ')'
+        count++;
         int j = i + 1;
-        while (tokens[j].type != ')')
+        while (count) {
+          if (tokens[j].type == '(')
+            count++;
+          else if (tokens[j].type == ')')
+            count--;
+          if (count == 0)
+            break;
           j++;
+        }
         i = j;
       }
       i++;
@@ -208,6 +214,8 @@ static int eval(int p, int q) {
       default: assert(0);
     }
   }
+  assert(0);
+
   return 0;
 }
 
@@ -217,7 +225,7 @@ word_t expr(char *e, bool *success) {
     return 0;
   }
 
-  int ans = eval(0, nr_token - 1);
+  word_t ans = eval(0, nr_token - 1);
 
   return ans;
 }
