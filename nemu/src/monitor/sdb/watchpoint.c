@@ -39,5 +39,43 @@ void init_wp_pool() {
   free_ = wp_pool;
 }
 
-/* TODO: Implement the functionality of watchpoint */
+WP* new_wp() {
+  if (!free_->next)
+    assert(0);
 
+  WP *res = free_->next;
+  free_->next = free_->next->next;
+  res->next = NULL;
+
+  if (!head)
+    head = res;
+  else {
+    res->next = head->next;
+    head->next = res;
+  }
+
+  return res;
+}
+
+void free_wp(WP *wp) {
+  if (!head->next && head->NO == wp->NO) {
+    wp->next = free_->next;
+    free_->next = wp;
+    head = head->next;
+    return;
+  }
+
+  WP *tmp = head;
+  while (tmp->next) {
+    if (tmp->next->NO == wp->NO) {
+      WP *save = tmp->next->next;
+      wp->next = free_->next;
+      free_->next = wp;
+      tmp->next = save;
+      return;
+    }
+    tmp = tmp->next;
+  }
+}
+
+/* TODO: Implement the functionality of watchpoint */

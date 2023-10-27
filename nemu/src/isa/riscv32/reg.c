@@ -39,7 +39,7 @@ word_t isa_reg_str2val(const char *s, bool *success) {
     return cpu.gpr[0];
 
   for (int i = 0; i < ARRLEN(regs); i++) {
-    if (!strcmp(s+1, regs[i])) // skip the first char $, then compare
+    if (!strcmp(s + 1, regs[i])) // skip the first char $, then compare
       return cpu.gpr[i];
   }
   *success = false;

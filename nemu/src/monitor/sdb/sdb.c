@@ -89,8 +89,8 @@ static int cmd_x(char *args) {
   char *x_num = strtok(args, " ");
   int num = atoi(x_num);
 
-  char *args_left = x_num + strlen(x_num) + 1;
-  paddr_t addr = strtoul(args_left, NULL, 16);
+  char *args_right = x_num + strlen(x_num) + 1;
+  paddr_t addr = strtoul(args_right, NULL, 16);
 
   uint8_t* mem = guest_to_host(addr);
 
@@ -123,7 +123,7 @@ static int cmd_p(char *args) {
     return 0;
   }
 
-  printf("val=%u\n", val);
+  printf("val=0x%x\n", val);
 
   return 0;
 }
