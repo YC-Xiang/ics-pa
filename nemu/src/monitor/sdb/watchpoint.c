@@ -17,14 +17,6 @@
 
 #define NR_WP 32
 
-typedef struct watchpoint {
-  int NO;
-  struct watchpoint *next;
-
-  /* TODO: Add more members if necessary */
-
-} WP;
-
 static WP wp_pool[NR_WP] = {};
 static WP *head = NULL, *free_ = NULL;
 
@@ -37,6 +29,30 @@ void init_wp_pool() {
 
   head = NULL;
   free_ = wp_pool;
+}
+
+bool check_watchpoints() {
+  bool success = true;
+  word_t val;
+  WP* tmp = head;
+
+  while (tmp) {
+    val = expr(tmp->expr, &success);
+    if (success == false) {
+      Log_error("check_watchpoint failed!\n");
+      return false;
+    }
+    if (val != tmp->val) {
+      nemu_state.state = NEMU_STOP;
+      printf("Hardware watchpoint%d: %s\n", tmp->NO, tmp->expr);
+      printf("Old value = 0x%x\n", tmp->val);
+      printf("New value = 0x%x\n", val);
+      tmp->val = val;
+      sdb_mainloop();
+    }
+    tmp = tmp->next;
+  }
+  return true;
 }
 
 WP* new_wp() {
@@ -57,25 +73,45 @@ WP* new_wp() {
   return res;
 }
 
-void free_wp(WP *wp) {
-  if (!head->next && head->NO == wp->NO) {
-    wp->next = free_->next;
-    free_->next = wp;
-    head = head->next;
+static void insert_free(WP *wp){
+  wp->next = free_->next;
+  free_->next = wp;
+}
+
+void free_wp(int NO) {
+  if (!head)
+  {
+    printf("There is no watchpoints in List head!\n");
+    return;
+  }
+
+  if (head->NO == NO) {
+    WP* buffer = head->next;
+    insert_free(head);
+    head = buffer;
     return;
   }
 
   WP *tmp = head;
   while (tmp->next) {
-    if (tmp->next->NO == wp->NO) {
+    if (tmp->next->NO == NO) {
       WP *save = tmp->next->next;
-      wp->next = free_->next;
-      free_->next = wp;
+      insert_free(tmp->next);
       tmp->next = save;
       return;
     }
     tmp = tmp->next;
   }
+  printf("Not found %sWatchPoint%d %s\n", ANSI_FG_YELLOW, NO, ANSI_NONE);
 }
 
-/* TODO: Implement the functionality of watchpoint */
+void show_watchpoints()
+{
+  WP* tmp = head;
+  printf("Num     What\n");
+  while (tmp)
+  {
+    printf("%d:      %s\n", tmp->NO, tmp->expr);
+    tmp = tmp->next;
+  }
+}

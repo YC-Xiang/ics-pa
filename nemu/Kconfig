@@ -214,8 +214,14 @@ config RT_CHECK
   bool "Enable runtime checking"
   default y
 
+endmenu
+
+menu "Defined by ME!"
 config DEBUG
   bool "Enable Debug info print"
   default n
 
+config WATCHPOINT
+  bool "Enable Watchpoint trace"
+  default n
 endmenu

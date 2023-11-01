@@ -76,12 +76,16 @@ static int cmd_info(char *args) {
 
   else if (*args == 'r')
     isa_reg_display();
-  //else if (*args == 'w')
+  else if (*args == 'w')
+  {
+    show_watchpoints();
+  }
 
   return 0;
 }
 
 static int cmd_x(char *args) {
+  bool ret = true;
   if (args == NULL) {
     Log_error("args is NULL, please enter X N EXPR\n");
     return 0;
@@ -90,7 +94,11 @@ static int cmd_x(char *args) {
   int num = atoi(x_num);
 
   char *args_right = x_num + strlen(x_num) + 1;
-  paddr_t addr = strtoul(args_right, NULL, 16);
+  paddr_t addr = expr(args_right, &ret);
+  if (ret == false) {
+    Log_error("expr failed!\n");
+    return 0;
+  }
 
   uint8_t* mem = guest_to_host(addr);
 
@@ -112,7 +120,7 @@ static int cmd_p(char *args) {
   word_t val;
 
   if (args == NULL) {
-    Log_error("args is NULL, please enter P EXPR\n");
+    Log_error("args is NULL, please enter p EXPR\n");
     return 0;
   }
 
@@ -125,6 +133,40 @@ static int cmd_p(char *args) {
 
   printf("val=0x%x\n", val);
 
+  return 0;
+}
+
+static int cmd_w(char *args) {
+  bool ret = true;
+  word_t val;
+
+  if (args == NULL) {
+    Log_error("args is NULL, please enter w EXPR\n");
+    return 0;
+  }
+
+  val = expr(args, &ret);
+
+  if (ret == false) {
+    Log_error("expression evaluation failed!\n");
+    return 0;
+  }
+
+  WP* watchpoint = new_wp();
+  watchpoint->val = val;
+  strcpy(watchpoint->expr, args);
+  printf("Hardware watchpoint%d: %s\n", watchpoint->NO, watchpoint->expr);
+  return 0;
+}
+
+static int cmd_d(char *args) {
+  if (args == NULL) {
+    Log_error("args is NULL, please enter d+Number\n");
+    return 0;
+  }
+
+  int num = atoi(args);
+  free_wp(num);
   return 0;
 }
 
@@ -142,6 +184,8 @@ static struct {
   { "info", "Print registers/watchpoints", cmd_info },
   { "x", "Print memory value", cmd_x },
   { "p", "expression evaluation", cmd_p },
+  { "w", "set watchpoint", cmd_w },
+  { "d", "delete watchpoint", cmd_d },
   /* TODO: Add more commands */
 
 };

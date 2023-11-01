@@ -19,6 +19,17 @@
 #include <common.h>
 #include <utils.h>
 
-word_t expr(char *e, bool *success);
+typedef struct watchpoint {
+  int NO;
+  struct watchpoint *next;
+  int val;
+  char expr[32];
+} WP;
 
+WP* new_wp();
+word_t expr(char *e, bool *success);
+void free_wp(int NO);
+void show_watchpoints();
+bool check_watchpoints();
+void sdb_mainloop();
 #endif
