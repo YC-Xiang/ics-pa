@@ -186,8 +186,6 @@ static struct {
   { "p", "expression evaluation", cmd_p },
   { "w", "set watchpoint", cmd_w },
   { "d", "delete watchpoint", cmd_d },
-  /* TODO: Add more commands */
-
 };
 
 #define NR_CMD ARRLEN(cmd_table)
